@@ -1,0 +1,16 @@
+{
+  "name": "quivy-monorepo",
+  "private": true,
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "npm run --workspaces --if-present dev",
+    "dev:frontend": "npm --workspace apps/frontend run dev",
+    "dev:backend": "npm --workspace apps/backend run start:dev",
+    "build": "npm run --workspaces --if-present build",
+    "start": "npm run --workspaces --if-present start",
+    "lint": "npm run --workspaces --if-present lint",
+    "test": "npm run --workspaces --if-present test"
+  }
+}

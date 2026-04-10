@@ -1,0 +1,218 @@
+"use server"
+
+import { AuthFormSchema, FormState } from "@/utils/definitions"
+import { BACKEND_URL } from "@/utils/constants"
+import { permanentRedirect, RedirectType} from "next/navigation"
+import axios from 'axios'
+import { createSession } from "@/utils/session"
+import { authFetch } from "./authFetch"
+
+
+export async function SignUp(prevState: FormState, formData: FormData): Promise<FormState> {
+
+    if (!(formData instanceof FormData)) {
+        return {
+            success: false,
+            errors: {
+                error: ["Invalid form data"]
+            }
+        }
+    }
+
+
+    const payload = Object.fromEntries(formData)
+
+    const validatedFields = AuthFormSchema.safeParse(payload)
+
+    if (!validatedFields.success) {
+        const errors = validatedFields.error.flatten().fieldErrors
+        const fields: Record<string, string> = {} 
+        
+        for (const key of Object.keys(payload)) {
+            fields[key] = payload[key].toString()
+        }
+
+        return {
+            success: false,
+            fields,
+            errors
+        }
+    }
+
+
+    //call provider to create user
+    const {email, password} = validatedFields.data
+    let shouldRedirect = false
+    try {
+        const res = await axios.post(`${BACKEND_URL}/auth/signup`, {
+          email,
+          password,
+        }, {
+            headers: {
+                "Content-Type": "application/json"
+            }
+        })
+
+        if (res.status !== 200) {
+            // throw new Error("Signup Failed!")
+            console.error(`Signup failed with status: ${res.status}`);
+            return {
+              success: false,
+              errors: {
+                api: [`Signup failed`],
+              },
+            };
+        }
+
+        const result = res.data
+        //create user session
+        await createSession(result)
+        await authFetch(`${BACKEND_URL}/auth/otp-verification`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            }
+        })
+        
+        shouldRedirect = true;
+    } catch (error) {
+        console.error(error)
+        return {
+            success: false,
+        }
+    }
+
+    if (shouldRedirect === true) {
+        permanentRedirect("/auth/verification", RedirectType.replace);
+    }
+    
+    return {
+      success: true,
+    };
+}
+
+export async function SignIn(prevState: FormState, formData: FormData): Promise<FormState> {
+    if (!(formData instanceof FormData)) {
+      return {
+        success: false,
+        errors: {
+          error: ["Invalid login details"],
+        },
+      };
+    }
+
+    const payload = Object.fromEntries(formData);
+    const validatedFields = AuthFormSchema.safeParse(payload);
+
+
+    if (!validatedFields.success) {
+      const errors = validatedFields.error.flatten().fieldErrors;
+      const fields: Record<string, string> = {};
+
+      for (const key of Object.keys(payload)) {
+        fields[key] = payload[key].toString();
+      }
+
+      return {
+        success: false,
+        fields,
+        errors,
+      };
+    }
+
+    //call provider to create user
+    const { email, password } = validatedFields.data
+    let shouldRedirect = false
+
+    try {
+        const res = await axios.post(`${BACKEND_URL}/auth/login`, {
+          email,
+          password,
+        }, {
+            headers: {
+                "Content-Type": "application/json"
+            }
+        })
+
+        if (res.status !== 200) {
+          console.error(`signin failed with status: ${res.status}`);
+          return {
+            success: false,
+            errors: {
+              api: [`login failed, Invalid login detiails`],
+            },
+          };
+        }
+
+        const result = res.data
+        console.log('result', result)
+        //create user session
+        await createSession(result)
+        shouldRedirect = true
+        
+        
+    } catch (error) {
+        console.error(error)
+        return {
+            success: false
+        }
+    }
+
+    if (shouldRedirect === true) {
+        permanentRedirect("/dashboard", RedirectType.replace);
+    }
+    
+    return{success: true}
+}
+
+
+
+export async function refreshToken(oldRefreshToken?: string) {
+    try {
+        const response = await fetch(`${BACKEND_URL}/auth/refresh`, {
+            method: 'POST',
+            headers: {
+                "Authorization": `Bearer ${oldRefreshToken}`,
+                "Content-Type": "application/json"
+            }
+        })
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+
+            if (response.status === 401 || response.status === 403 ||
+                errorData.message?.includes('expired') ||
+                errorData.message?.includes('invalid')) {
+                // This is an expired or invalid refresh token
+                throw new Error('REFRESH_TOKEN_EXPIRED');
+            }
+
+            throw new Error(errorData.message || "Failed to refresh token");
+        }
+
+        const { accessToken, refreshToken } = await response.json()
+        
+        const updateRes = await axios.post("http://localhost:3000/api/auth/update", {
+            accessToken,
+            refreshToken
+        })
+
+        if (updateRes.status !== 200) {
+            throw new Error("failed to update tokens ")
+        }
+
+        return accessToken
+    } catch (error) {
+        console.error("refresh token failed", error)
+        return null
+    }
+}
+
+
+// export async function emailVerification() {
+
+// }
+
+
+
+// export async function forgotPassword() {}
