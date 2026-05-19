@@ -5,12 +5,12 @@
     "apps/*"
   ],
   "scripts": {
-    "dev": "npm run --workspaces --if-present dev",
-    "dev:frontend": "npm --workspace apps/frontend run dev",
-    "dev:backend": "npm --workspace apps/backend run start:dev",
-    "build": "npm run --workspaces --if-present build",
-    "start": "npm run --workspaces --if-present start",
-    "lint": "npm run --workspaces --if-present lint",
-    "test": "npm run --workspaces --if-present test"
+    "dev": "pnpm -r --if-present dev",
+    "dev:frontend": "pnpm --filter ./apps/frontend dev",
+    "dev:backend": "pnpm --filter ./apps/backend start:dev",
+    "build": "pnpm -r --if-present build",
+    "start": "pnpm -r --if-present start",
+    "lint": "pnpm -r --if-present lint",
+    "test": "pnpm -r --if-present test"
   }
 }

@@ -8,8 +8,8 @@
       "name": "Next.js: debug full stack",
       "type": "node",
       "request": "launch",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["dev"],
       "skipFiles": ["<node_internals>/**"],
       "serverReadyAction": {
         "pattern": "started server on .+, url: (https?://.+)",
@@ -21,8 +21,8 @@
       "name": "Next.js: debug server-side",
       "type": "node",
       "request": "launch",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["dev"],
       "console": "integratedTerminal",
       "skipFiles": ["<node_internals>/**"]
     },
@@ -37,8 +37,8 @@
       "name": "Next.js: debug production build",
       "type": "node",
       "request": "launch",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "build"],
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["build"],
       "console": "integratedTerminal",
       "skipFiles": ["<node_internals>/**"]
     }
